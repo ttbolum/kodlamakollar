@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Bedenle Kodlama Platformu 🐝🤖🚀 | Kamera ve Hareket Sensörlü Kodlama</title>
-<!-- MediaPipe Holistic -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/holistic.js" crossorigin="anonymous"></script>
+<!-- MediaPipe Pose (Hafif ve Hızlı - Sadece 2.9 MB) -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
 <style>
   :root {
     --primary: #4f46e5;
@@ -1598,49 +1598,20 @@ function showBoardMsg(title, sub) {
 }
 
 // ============================================================================
-// 7. BEDEN & EL HAREKETİ TANIMA (MediaPipe Holistic)
+// 7. BEDEN HAREKETİ TANIMA (MediaPipe Pose - Ultra Hızlı & Hafif Model)
 // ============================================================================
-// İskelet Çizim Bağlantıları
 const POSE_CONNECTIONS = [
   [11, 12], // Omuzlar
   [11, 13], [13, 15], // Sol Kol
   [12, 14], [14, 16], // Sağ Kol
+  [15, 17], [15, 19], [15, 21], // Sol El (Bilek, Serçe, İşaret, Başparmak)
+  [16, 18], [16, 20], [16, 22], // Sağ El (Bilek, Serçe, İşaret, Başparmak)
   [11, 23], [12, 24], // Gövde
   [23, 24]  // Kalçalar
 ];
-const HAND_CONNECTIONS = [
-  [0,1],[1,2],[2,3],[3,4],
-  [0,5],[5,6],[6,7],[7,8],
-  [5,9],[9,10],[10,11],[11,12],
-  [9,13],[13,14],[14,15],[15,16],
-  [13,17],[17,18],[18,19],[19,20],[0,17]
-];
 
-function isHandFist(hLm) {
-  if (!hLm || hLm.length < 21) return false;
-  const wrist = hLm[0];
-  let folded = 0;
-  // İşaret, Orta, Yüzük, Serçe parmak uçları vs PIP eklemleri
-  const pairs = [[8, 6], [12, 10], [16, 14], [20, 18]];
-  for (const [tip, pip] of pairs) {
-    const dTip = Math.hypot(hLm[tip].x - wrist.x, hLm[tip].y - wrist.y);
-    const dPip = Math.hypot(hLm[pip].x - wrist.x, hLm[pip].y - wrist.y);
-    if (dTip < dPip * 1.15) folded++;
-  }
-  return folded >= 3;
-}
-
-function classifyHolistic(res) {
+function classifyPose(res) {
   const pLm = res.poseLandmarks;
-  const lHand = res.leftHandLandmarks;
-  const rHand = res.rightHandLandmarks;
-
-  // 1. ÇALIŞTIRMA: Yumruk Kontrolü (✊)
-  // El landmarkları üzerinden yumruk tespiti
-  if (isHandFist(rHand) || isHandFist(lHand)) {
-    return "RUN";
-  }
-
   if (!pLm || pLm.length < 25) return null;
 
   // Omuz genişliği normalizasyonu (Kameraya uzaklıktan bağımsız tespit için)
@@ -1649,24 +1620,33 @@ function classifyHolistic(res) {
     0.12
   );
 
-  // 2. Gövde üzerinde yumruk/yumrukları birleştirme fallback tespiti
+  // 1. ÇALIŞTIRMA: Yumruk Tespiti (✊)
+  // Pose landmarkları:
+  // 15: Sol Bilek, 17: Sol Serçe, 19: Sol İşaret
+  // 16: Sağ Bilek, 18: Sağ Serçe, 20: Sağ İşaret
+  const dRightHand = Math.hypot(pLm[20].x - pLm[16].x, pLm[20].y - pLm[16].y) / shoulderDist;
+  const dLeftHand = Math.hypot(pLm[19].x - pLm[15].x, pLm[19].y - pLm[15].y) / shoulderDist;
+
+  // Bileklerin göğüste birbirine yaklaşması (yumrukları birleştirme / hazır duruşu)
   const wristsDist = Math.hypot(pLm[15].x - pLm[16].x, pLm[15].y - pLm[16].y) / shoulderDist;
   const wristsChest = (pLm[15].y > pLm[11].y - 0.1 && pLm[15].y < pLm[23].y + 0.15) &&
                       (pLm[16].y > pLm[12].y - 0.1 && pLm[16].y < pLm[24].y + 0.15);
 
-  // 3. GERİ AL / SİL: Kolları Çapraz Yapma (🙅)
+  // Yumruk sıkıldığında işaret ucu bileğe yaklaşır (dHand < 0.22) veya iki yumruk göğüste birleşir
+  if ((dRightHand < 0.22 && pLm[16].y < pLm[24].y) ||
+      (dLeftHand < 0.22 && pLm[15].y < pLm[23].y) ||
+      (wristsDist < 0.42 && wristsChest)) {
+    return "RUN";
+  }
+
+  // 2. GERİ AL / SİL: Kolları Çapraz Yapma (🙅)
   // Sol bilek sağ omuz tarafına, sağ bilek sol omuz tarafına geçer
   const crossedArms = (pLm[15].x < pLm[12].x + 0.05) && (pLm[16].x > pLm[11].x - 0.05) && wristsChest;
   if (crossedArms) {
     return "UNDO";
   }
 
-  // Göğüste yumruklar bitişikse -> RUN
-  if (wristsDist < 0.42 && wristsChest) {
-    return "RUN";
-  }
-
-  // 4. İLERİ: Kolu Yukarı Kaldır (⬆️)
+  // 3. İLERİ: Kolu Yukarı Kaldır (⬆️)
   // Sağ veya sol bilek omuz/baş hizasının belirgin şekilde üzerinde
   const rightArmUp = (pLm[12].y - pLm[16].y) / shoulderDist > 0.35 || pLm[16].y < pLm[0].y;
   const leftArmUp = (pLm[11].y - pLm[15].y) / shoulderDist > 0.35 || pLm[15].y < pLm[0].y;
@@ -1674,7 +1654,7 @@ function classifyHolistic(res) {
     return "FWD";
   }
 
-  // 5. SAĞA: Sağ Kolu Sağa Aç (↪️)
+  // 4. SAĞA: Sağ Kolu Sağa Aç (↪️)
   // Not: Kamera selfie modunda aynalıdır (scaleX(-1)).
   // Kullanıcının fiziksel sağ kolu ekranda sağa açılır (raw kamerada x küçülür).
   const rightArmOut = (pLm[12].x - pLm[16].x) / shoulderDist > 0.65;
@@ -1684,14 +1664,14 @@ function classifyHolistic(res) {
     return "RIGHT";
   }
 
-  // 6. SOLA: Sol Kolu Sola Aç (↩️)
+  // 5. SOLA: Sol Kolu Sola Aç (↩️)
   // Kullanıcının fiziksel sol kolu ekranda sola açılır (raw kamerada x büyür).
   const leftArmLevel = Math.abs(pLm[15].y - pLm[11].y) / shoulderDist < 0.9;
   if (leftArmOut && leftArmLevel && !rightArmOut) {
     return "LEFT";
   }
 
-  // 7. GERİ: Kolu Aşağı İndir (⬇️)
+  // 6. GERİ: Kolu Aşağı İndir (⬇️)
   // Bilek kalça hizasının belirgin altında uzatılmış
   const rightArmDown = (pLm[16].y - pLm[24].y) / shoulderDist > 0.15;
   const leftArmDown = (pLm[15].y - pLm[23].y) / shoulderDist > 0.15;
@@ -1727,7 +1707,7 @@ const GESTURE_NAMES = {
   UNDO: "GERİ AL / SİL"
 };
 
-function onHolisticResults(res) {
+function onPoseResults(res) {
   ctx.clearRect(0, 0, 640, 480);
 
   // İskelet Çizimi
@@ -1745,31 +1725,17 @@ function onHolisticResults(res) {
     }
     // Eklemler
     ctx.fillStyle = "#ff4081";
-    for (const idx of [11, 12, 13, 14, 15, 16]) {
+    for (const idx of [11, 12, 13, 14, 15, 16, 17, 18, 19, 20]) {
       if (lm[idx]) {
         ctx.beginPath();
-        ctx.arc(lm[idx].x * 640, lm[idx].y * 480, 6, 0, 2 * Math.PI);
+        ctx.arc(lm[idx].x * 640, lm[idx].y * 480, 5, 0, 2 * Math.PI);
         ctx.fill();
       }
     }
-
-    // El İskeletleri (Varsa)
-    [res.leftHandLandmarks, res.rightHandLandmarks].forEach(hLm => {
-      if (hLm) {
-        ctx.strokeStyle = "#a855f7";
-        ctx.lineWidth = 2;
-        for (const [a, b] of HAND_CONNECTIONS) {
-          ctx.beginPath();
-          ctx.moveTo(hLm[a].x * 640, hLm[a].y * 480);
-          ctx.lineTo(hLm[b].x * 640, hLm[b].y * 480);
-          ctx.stroke();
-        }
-      }
-    });
   }
 
   // Hareket Sınıflandırma
-  const g = classifyHolistic(res);
+  const g = classifyPose(res);
   const now = performance.now();
   let progress = 0;
 
@@ -1825,39 +1791,38 @@ async function startCamera() {
     video.srcObject = stream;
     await video.play();
     statusDot.classList.add("active");
-    camStatusText.textContent = "Kamera aktif, model yükleniyor…";
+    camStatusText.textContent = "Kamera aktif, hızlı model yükleniyor (2.9 MB)…";
   } catch (err) {
     statusDot.style.background = "#eab308";
     camStatusText.textContent = "Kamera bulunamadı. Butonlar veya klavyeyle oynayabilirsin!";
     return;
   }
 
-  if (typeof Holistic === "undefined") {
-    camStatusText.textContent = "MediaPipe kütüphanesi yüklenemedi. Butonlar aktif.";
+  if (typeof Pose === "undefined") {
+    camStatusText.textContent = "MediaPipe Pose yüklenemedi. Butonlar aktif.";
     return;
   }
 
   try {
-    const holistic = new Holistic({
-      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/${file}`
+    const pose = new Pose({
+      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
     });
 
-    holistic.setOptions({
-      modelComplexity: 0, // Lite model for smooth 30-60 FPS
+    pose.setOptions({
+      modelComplexity: 0, // En hızlı, en hafif model (Lite - 2.9 MB, 30-60 FPS)
       smoothLandmarks: true,
       enableSegmentation: false,
       smoothSegmentation: false,
-      refineFaceLandmarks: false,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5
     });
 
-    holistic.onResults(onHolisticResults);
-    await holistic.initialize();
+    pose.onResults(onPoseResults);
+    await pose.initialize();
 
     camStatusText.textContent = "Bedenini kameraya göster ve oyna! 🐝";
     setTimeout(() => {
-      camStatusText.textContent = "Beden Sensörü Aktif";
+      camStatusText.textContent = "Beden Sensörü Aktif ⚡";
     }, 4000);
 
     // Frame döngüsü
@@ -1865,7 +1830,7 @@ async function startCamera() {
     let frames = 0;
     async function camLoop() {
       if (video.readyState >= 2) {
-        await holistic.send({ image: video });
+        await pose.send({ image: video });
         frames++;
         const now = performance.now();
         if (now - lastTime >= 1000) {
