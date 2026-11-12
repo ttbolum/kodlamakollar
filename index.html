@@ -1,0 +1,2122 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Bedenle Kodlama Platformu 🐝🤖🚀 | Kamera ve Hareket Sensörlü Kodlama</title>
+<!-- MediaPipe Holistic -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/holistic.js" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --accent: #ff9800;
+    --accent-glow: rgba(255, 152, 0, 0.45);
+    --success: #10b981;
+    --danger: #ef4444;
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #fdf4ff 100%);
+    --card-bg: rgba(255, 255, 255, 0.88);
+    --card-border: rgba(226, 232, 240, 0.9);
+    --ink: #1e293b;
+    --ink-muted: #64748b;
+    --cell: min(78px, 14.5vw);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  }
+
+  [data-theme="robot"] {
+    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #172554 100%);
+    --card-bg: rgba(30, 41, 59, 0.88);
+    --card-border: rgba(51, 65, 85, 0.9);
+    --ink: #f8fafc;
+    --ink-muted: #94a3b8;
+    --primary: #06b6d4;
+    --primary-hover: #0891b2;
+  }
+
+  [data-theme="space"] {
+    --bg-gradient: linear-gradient(135deg, #09090b 0%, #180d38 50%, #030712 100%);
+    --card-bg: rgba(24, 18, 43, 0.9);
+    --card-border: rgba(76, 29, 149, 0.6);
+    --ink: #faf5ff;
+    --ink-muted: #c084fc;
+    --primary: #a855f7;
+    --primary-hover: #9333ea;
+  }
+
+  [data-theme="cat"] {
+    --bg-gradient: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fce7f3 100%);
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --card-border: rgba(253, 230, 138, 0.8);
+    --ink: #451a03;
+    --ink-muted: #92400e;
+    --primary: #f59e0b;
+    --primary-hover: #d97706;
+  }
+
+  * { box-sizing: border-box; margin:0; padding:0; user-select:none; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-gradient);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 14px 24px;
+    overflow-x: hidden;
+    transition: background 0.4s ease;
+  }
+
+  /* Header */
+  header {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-icon {
+    font-size: 32px;
+    animation: floatAnim 3s ease-in-out infinite;
+  }
+  .brand-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+  .brand-title small {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    letter-spacing: 0;
+  }
+
+  .nav-center {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .level-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary);
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    border: 1px solid rgba(79, 70, 229, 0.2);
+  }
+  .stars-pill {
+    color: #f59e0b;
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn-icon {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-icon:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    border-color: var(--primary);
+  }
+  .btn-icon.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+
+  /* Main Workspace */
+  .workspace {
+    width: 100%;
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: minmax(320px, 480px) minmax(320px, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .workspace {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Camera Card */
+  .cam-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .cam-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #0f172a;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .cam-wrap video, .cam-wrap canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .cam-wrap.mirrored video, .cam-wrap.mirrored canvas {
+    transform: scaleX(-1);
+  }
+
+  /* Gesture Overlay Pill */
+  .gesture-pill {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px 6px 8px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    z-index: 10;
+  }
+  .ring-svg {
+    width: 38px;
+    height: 38px;
+    transform: rotate(-90deg);
+  }
+  .ring-bg {
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 4;
+    fill: transparent;
+  }
+  .ring-bar {
+    stroke: #22c55e;
+    stroke-width: 4;
+    fill: transparent;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.05s linear;
+  }
+  .gesture-icon {
+    position: absolute;
+    left: 11px;
+    top: 10px;
+    font-size: 20px;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .cam-status {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 8px 12px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #e2e8f0;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 5;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .status-dot.active { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+
+  /* Pose Guide Grid */
+  .pose-guide {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .guide-card {
+    padding: 8px 6px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.5);
+    border: 1.5px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .guide-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--primary);
+  }
+  .guide-card.detected {
+    background: rgba(34, 197, 94, 0.15) !important;
+    border-color: #22c55e !important;
+    transform: scale(1.04);
+    box-shadow: 0 0 14px rgba(34, 197, 94, 0.4);
+  }
+  .guide-icon {
+    font-size: 24px;
+    margin-bottom: 2px;
+  }
+  .guide-name {
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .guide-desc {
+    font-size: 10px;
+    color: var(--ink-muted);
+  }
+
+  /* Game Arena Card */
+  .arena-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .arena-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--card-border);
+  }
+  .arena-title {
+    font-size: 17px;
+    font-weight: 800;
+  }
+  .target-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(79, 70, 229, 0.08);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  /* Board Area */
+  .board-wrap {
+    position: relative;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+  }
+  #board {
+    position: relative;
+    width: calc(var(--cell) * 5);
+    height: calc(var(--cell) * 5);
+    border-radius: 14px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+  .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--cell) * 0.52);
+    position: relative;
+    transition: background 0.3s;
+  }
+  /* Theme cell styles */
+  .theme-bee .cell.a { background: #c8ebc8; }
+  .theme-bee .cell.b { background: #d9f6d9; }
+  .theme-robot .cell.a { background: #1e293b; border: 1px solid #334155; }
+  .theme-robot .cell.b { background: #0f172a; border: 1px solid #334155; }
+  .theme-space .cell.a { background: #1a103c; border: 1px solid #2e1a68; }
+  .theme-space .cell.b { background: #0f0826; border: 1px solid #2e1a68; }
+  .theme-cat .cell.a { background: #fed7aa; }
+  .theme-cat .cell.b { background: #ffedd5; }
+
+  /* Animated Character */
+  #character {
+    position: absolute;
+    width: var(--cell);
+    height: var(--cell);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--cell) * 0.58);
+    transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    z-index: 10;
+  }
+  #charRot {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .direction-arrow {
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 16px solid var(--accent);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+
+  /* Overlay Message on Board */
+  #boardMsg {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    font-size: clamp(22px, 5vw, 36px);
+    font-weight: 800;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(6px);
+    border-radius: 14px;
+    z-index: 20;
+    animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  [data-theme="robot"] #boardMsg, [data-theme="space"] #boardMsg {
+    background: rgba(15, 23, 42, 0.9);
+  }
+
+  /* Command Sequence Bar */
+  .cmd-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cmd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-muted);
+  }
+  .cmd-slots {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: 60px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: var(--radius-md);
+  }
+  .slot {
+    width: min(54px, 12vw);
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    position: relative;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .slot.filled {
+    border-color: var(--primary);
+  }
+  .slot.active {
+    border: 3px solid var(--accent);
+    transform: scale(1.15);
+    box-shadow: 0 0 16px var(--accent-glow);
+    z-index: 5;
+  }
+  .slot-num {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--ink-muted);
+  }
+
+  /* Interactive Controls */
+  .controls-row {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .btn-cmd {
+    flex: 1;
+    min-width: 80px;
+    padding: 9px 8px;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--ink);
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transition: all 0.2s;
+  }
+  .btn-cmd small {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-muted);
+  }
+  .btn-cmd:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .btn-cmd.btn-run {
+    background: var(--success);
+    color: #fff;
+    border-color: #059669;
+    flex: 1.3;
+  }
+  .btn-cmd.btn-run small { color: #ecfdf5; }
+  .btn-cmd.btn-undo {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+  }
+  .btn-cmd.btn-undo small { color: #991b1b; }
+
+  /* Tips Bar */
+  .tips-bar {
+    width: 100%;
+    max-width: 1200px;
+    margin-top: 14px;
+    padding: 10px 16px;
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--card-border);
+    font-size: 12px;
+    color: var(--ink-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Modals */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+  }
+  .modal-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 620px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .modal-title {
+    font-size: 20px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--ink-muted);
+    padding: 4px;
+    border-radius: 6px;
+  }
+  .btn-close:hover { color: var(--danger); background: rgba(0,0,0,0.05); }
+
+  /* Level Grid in Modal */
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+  }
+  .lvl-card {
+    padding: 12px;
+    background: rgba(0,0,0,0.02);
+    border: 2px solid var(--card-border);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .lvl-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+  }
+  .lvl-card.active {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.08);
+  }
+  .lvl-num { font-size: 16px; font-weight: 800; }
+  .lvl-stars { font-size: 13px; color: #f59e0b; }
+
+  /* Theme Chooser Cards */
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .theme-card {
+    padding: 14px;
+    border: 2px solid var(--card-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+  }
+  .theme-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+  .theme-card.active {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.1);
+  }
+  .theme-avatar { font-size: 34px; }
+
+  /* Level Builder Editor */
+  .builder-palette {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .tool-btn {
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--card-border);
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tool-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+  }
+  .builder-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 54px);
+    grid-template-rows: repeat(5, 54px);
+    gap: 4px;
+    justify-content: center;
+    margin: 14px 0;
+    padding: 12px;
+    background: rgba(0,0,0,0.04);
+    border-radius: var(--radius-md);
+  }
+  .b-cell {
+    background: #fff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .b-cell:hover { background: #f1f5f9; }
+
+  /* Confetti Canvas */
+  #confettiCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* Animations */
+  @keyframes floatAnim {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 rgba(79, 70, 229, 0); }
+    50% { box-shadow: 0 0 18px rgba(79, 70, 229, 0.6); }
+  }
+</style>
+</head>
+<body class="theme-bee" data-theme="bee">
+
+<canvas id="confettiCanvas"></canvas>
+
+<!-- Top Navigation -->
+<header>
+  <div class="brand">
+    <span class="brand-icon" id="logoIcon">🐝</span>
+    <div class="brand-title">
+      <span id="platformTitle">Bedenle Kodlama</span>
+      <small>Hareket Sensörlü Akıllı Platform</small>
+    </div>
+  </div>
+
+  <div class="nav-center">
+    <div class="level-badge">
+      <span id="lvlLabel">Seviye 1/12</span>
+      <span class="stars-pill" id="lvlStars">⭐⭐⭐</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn-icon" id="btnOpenLevels" title="Bölüm Listesi">🗺️ <span>Seviyeler</span></button>
+    <button class="btn-icon" id="btnOpenThemes" title="Karakter ve Tema Seç">🎭 <span>Karakter</span></button>
+    <button class="btn-icon" id="btnOpenEditor" title="Kendi Seviyeni Tasarla">🛠️ <span>Bölüm Editörü</span></button>
+    <button class="btn-icon" id="btnOpenGuide" title="Hareket Kılavuzu">🎓 <span>Rehber</span></button>
+    <button class="btn-icon" id="btnOpenSettings" title="Ayarlar">⚙️</button>
+    <button class="btn-icon" id="btnToggleSound" title="Ses Aç/Kapat">🔊</button>
+    <button class="btn-icon" id="btnFullscreen" title="Tam Ekran">⛶</button>
+  </div>
+</header>
+
+<!-- Main Workspace -->
+<main class="workspace">
+  <!-- Left Side: Camera & AI Pose -->
+  <section class="cam-card">
+    <div class="cam-wrap mirrored" id="camWrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay" width="640" height="480"></canvas>
+      
+      <!-- Gesture Progress Indicator -->
+      <div class="gesture-pill" id="gesturePill">
+        <svg class="ring-svg" viewBox="0 0 38 38">
+          <circle class="ring-bg" cx="19" cy="19" r="16"></circle>
+          <circle class="ring-bar" id="ringBar" cx="19" cy="19" r="16"></circle>
+        </svg>
+        <span class="gesture-icon" id="gestureIcon">⬆️</span>
+        <span id="gestureLabel">İLERİ</span>
+      </div>
+
+      <div class="cam-status">
+        <div><span class="status-dot" id="statusDot"></span><span id="camStatusText">Kamera başlatılıyor…</span></div>
+        <small id="fpsCounter"></small>
+      </div>
+    </div>
+
+    <!-- Live Pose Feedback Grid -->
+    <div class="pose-guide">
+      <div class="guide-card" data-cmd="FWD" id="guide-FWD">
+        <span class="guide-icon">⬆️</span>
+        <span class="guide-name">İLERİ</span>
+        <span class="guide-desc">Kolu Yukarı Kaldır</span>
+      </div>
+      <div class="guide-card" data-cmd="BACK" id="guide-BACK">
+        <span class="guide-icon">⬇️</span>
+        <span class="guide-name">GERİ</span>
+        <span class="guide-desc">Kolu Aşağı İndir</span>
+      </div>
+      <div class="guide-card" data-cmd="RIGHT" id="guide-RIGHT">
+        <span class="guide-icon">↪️</span>
+        <span class="guide-name">SAĞA DÖN</span>
+        <span class="guide-desc">Sağ Kolu Aç</span>
+      </div>
+      <div class="guide-card" data-cmd="LEFT" id="guide-LEFT">
+        <span class="guide-icon">↩️</span>
+        <span class="guide-name">SOLA DÖN</span>
+        <span class="guide-desc">Sol Kolu Aç</span>
+      </div>
+      <div class="guide-card" data-cmd="RUN" id="guide-RUN">
+        <span class="guide-icon">✊</span>
+        <span class="guide-name">ÇALIŞTIR</span>
+        <span class="guide-desc">Yumruk Yap</span>
+      </div>
+      <div class="guide-card" data-cmd="UNDO" id="guide-UNDO">
+        <span class="guide-icon">❌</span>
+        <span class="guide-name">GERİ AL</span>
+        <span class="guide-desc">Kolları Çaprazla</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Right Side: Game Arena -->
+  <section class="arena-card">
+    <div class="arena-header">
+      <div class="arena-title" id="arenaLevelTitle">Seviye 1: İlk Adım</div>
+      <div class="target-badge">
+        <span id="targetIcon">🌸</span>
+        <span id="targetStatus">0 / 1 Toplandı</span>
+      </div>
+    </div>
+
+    <!-- Game Board -->
+    <div class="board-wrap">
+      <div id="board"></div>
+      <div id="boardMsg">
+        <div id="msgTitle">BRAVO! 🎉</div>
+        <small id="msgSub" style="font-size:16px; font-weight:500; margin-top:6px;">Harika bir kodlama!</small>
+      </div>
+    </div>
+
+    <!-- Commands Queue -->
+    <div class="cmd-container">
+      <div class="cmd-header">
+        <span>KOD DİZİSİ</span>
+        <span id="cmdCount">0 / 12 Komut</span>
+      </div>
+      <div class="cmd-slots" id="cmdSlots"></div>
+    </div>
+
+    <!-- On-Screen Controls -->
+    <div class="controls-row">
+      <button class="btn-cmd" data-c="FWD" title="İleri Git (W / 1)">⬆️<small>İleri</small></button>
+      <button class="btn-cmd" data-c="LEFT" title="Sola Dön (A / 3)">↩️<small>Sola</small></button>
+      <button class="btn-cmd" data-c="RIGHT" title="Sağa Dön (D / 2)">↪️<small>Sağa</small></button>
+      <button class="btn-cmd" data-c="BACK" title="Geri Adım (S / 4)">⬇️<small>Geri</small></button>
+      <button class="btn-cmd btn-run" data-c="RUN" title="Çalıştır (Boşluk / Enter)">▶️<small>Çalıştır</small></button>
+      <button class="btn-cmd btn-undo" data-c="UNDO" title="Son Komutu Sil (Backspace)">↩️<small>Sil</small></button>
+      <button class="btn-cmd" id="btnClearCmds" title="Tümünü Temizle (C)">🗑️<small>Temizle</small></button>
+      <button class="btn-cmd" id="btnResetLevel" title="Baştan Başla (R)">🔄<small>Sıfırla</small></button>
+    </div>
+  </section>
+</main>
+
+<!-- Bottom Helpful Tips Bar -->
+<footer class="tips-bar">
+  <div><strong>🎮 Klavye:</strong> W/1 (İleri) · S/4 (Geri) · D/2 (Sağa) · A/3 (Sola) · Enter/Boşluk (Çalıştır) · Sil (Backspace) · N (Sonraki) · R (Sıfırla)</div>
+  <div><strong>💡 Beden İpucu:</strong> Hareketi yapıp ~1 saniye sabit tuttuğunda komut otomatik eklenir!</div>
+</footer>
+
+<!-- Modals -->
+
+<!-- 1. Levels Modal -->
+<div class="modal-backdrop" id="modalLevels">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">🗺️ Seviye Seçimi</div>
+      <button class="btn-close" data-close>&times;</button>
+    </div>
+    <div class="level-grid" id="levelGridContainer"></div>
+  </div>
+</div>
+
+<!-- 2. Themes Modal -->
+<div class="modal-backdrop" id="modalThemes">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">🎭 Karakter ve Tema Seç</div>
+      <button class="btn-close" data-close>&times;</button>
+    </div>
+    <div class="theme-grid">
+      <div class="theme-card active" data-t="bee">
+        <span class="theme-avatar">🐝</span>
+        <div>
+          <strong>Arı Vızvız</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Çiçek bahçesinde bal topla!</p>
+        </div>
+      </div>
+      <div class="theme-card" data-t="robot">
+        <span class="theme-avatar">🤖</span>
+        <div>
+          <strong>Robot Robi</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Laboratuvarda enerji pillerini topla!</p>
+        </div>
+      </div>
+      <div class="theme-card" data-t="space">
+        <span class="theme-avatar">🚀</span>
+        <div>
+          <strong>Uzay Mekiği</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Galakside parlak yıldızları keşfet!</p>
+        </div>
+      </div>
+      <div class="theme-card" data-t="cat">
+        <span class="theme-avatar">🐱</span>
+        <div>
+          <strong>Minik Pati</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Odada balıkları ve süt kasesini bul!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Level Builder Modal -->
+<div class="modal-backdrop" id="modalEditor">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">🛠️ Kendi Seviyeni Tasarla</div>
+      <button class="btn-close" data-close>&times;</button>
+    </div>
+    <p style="font-size:13px; color:var(--ink-muted); margin-bottom:12px;">Bir araç seç ve ızgaraya tıkla. Kendi labirentini oluştur!</p>
+    
+    <div class="builder-palette">
+      <button class="tool-btn active" data-tool="start"><span id="bStartIcon">🐝</span> Başlangıç</button>
+      <button class="tool-btn" data-tool="target"><span id="bTargetIcon">🌸</span> Hedef</button>
+      <button class="tool-btn" data-tool="rock"><span id="bRockIcon">🪨</span> Engel</button>
+      <button class="tool-btn" data-tool="empty">🧹 Temizle</button>
+    </div>
+
+    <div class="builder-grid" id="builderGrid"></div>
+
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+      <button class="btn-icon" id="btnClearBuilder">Tümünü Boşalt</button>
+      <button class="btn-icon active" id="btnPlayCustom">🎮 Tasarımı Oyna!</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Gesture Guide Modal -->
+<div class="modal-backdrop" id="modalGuide">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">🎓 Beden Hareketleri Kılavuzu</div>
+      <button class="btn-close" data-close>&times;</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:14px; font-size:14px;">
+      <div style="display:flex; align-items:center; gap:14px; padding:10px; background:rgba(0,0,0,0.03); border-radius:10px;">
+        <span style="font-size:36px;">⬆️</span>
+        <div>
+          <strong>İleri Gitmek İçin: Kolunu Yukarı Kaldır</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Bir veya iki kolunu başının üzerine doğru kaldır ve 1 saniye bekle.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; padding:10px; background:rgba(0,0,0,0.03); border-radius:10px;">
+        <span style="font-size:36px;">↪️</span>
+        <div>
+          <strong>Sağa Gitmek/Dönmek İçin: Sağ Kolunu Sağa Aç</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Sağ kolunu yana doğru uzat (aynada sağ tarafa bakar).</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; padding:10px; background:rgba(0,0,0,0.03); border-radius:10px;">
+        <span style="font-size:36px;">↩️</span>
+        <div>
+          <strong>Sola Gitmek/Dönmek İçin: Sol Kolunu Sola Aç</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Sol kolunu yana doğru uzat (aynada sol tarafa bakar).</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; padding:10px; background:rgba(0,0,0,0.03); border-radius:10px;">
+        <span style="font-size:36px;">⬇️</span>
+        <div>
+          <strong>Geri Gitmek İçin: Kolunu Aşağı İndir</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Kolunu aşağıya doğru uzatıp tut.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; padding:10px; background:rgba(0,0,0,0.03); border-radius:10px;">
+        <span style="font-size:36px;">✊</span>
+        <div>
+          <strong>Çalıştırmak İçin: Yumruk Yap</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Elini yumruk yapıp kameraya göster veya göğsünün önünde yumruk yap.</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; padding:10px; background:rgba(0,0,0,0.03); border-radius:10px;">
+        <span style="font-size:36px;">❌</span>
+        <div>
+          <strong>Son Komutu Silmek İçin: Kolları Çaprazla (🙅)</strong>
+          <p style="font-size:12px; color:var(--ink-muted);">Kollarını göğsünde 'X' şeklinde çapraz yap.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Settings Modal -->
+<div class="modal-backdrop" id="modalSettings">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ Oyun ve Kamera Ayarları</div>
+      <button class="btn-close" data-close>&times;</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div>
+        <label style="font-weight:700; font-size:14px;">Hareket Onay Süresi (Sabit Tutma): <span id="holdMsLabel">1.0 sn</span></label>
+        <input type="range" id="rangeHold" min="600" max="1800" step="100" value="1000" style="width:100%; margin-top:6px;">
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-weight:700; font-size:14px;">Kamera Aynalama (Selfie Modu)</span>
+        <input type="checkbox" id="chkMirror" checked style="width:20px; height:20px; cursor:pointer;">
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-weight:700; font-size:14px;">İskelet Çizgilerini Göster</span>
+        <input type="checkbox" id="chkSkeleton" checked style="width:20px; height:20px; cursor:pointer;">
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-weight:700; font-size:14px;">Ses Efektleri</span>
+        <input type="checkbox" id="chkSound" checked style="width:20px; height:20px; cursor:pointer;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// 1. TEMALAR & KARAKTERLER
+// ============================================================================
+const THEMES = {
+  bee: {
+    id: "bee",
+    name: "Arı Vızvız",
+    char: "🐝",
+    target: "🌸",
+    targetName: "Çiçek",
+    rock: "🪨",
+    finish: "🍯",
+    title: "🐝 Arı ile Bedenle Kodlama"
+  },
+  robot: {
+    id: "robot",
+    name: "Robot Robi",
+    char: "🤖",
+    target: "🔋",
+    targetName: "Enerji Pili",
+    rock: "⚠️",
+    finish: "⚡",
+    title: "🤖 Robotik Beden Kodlama"
+  },
+  space: {
+    id: "space",
+    name: "Uzay Mekiği",
+    char: "🚀",
+    target: "⭐",
+    targetName: "Yıldız",
+    rock: "☄️",
+    finish: "🪐",
+    title: "🚀 Galaktik Hareket Kodlama"
+  },
+  cat: {
+    id: "cat",
+    name: "Minik Pati",
+    char: "🐱",
+    target: "🐟",
+    targetName: "Balık",
+    rock: "🧶",
+    finish: "🥛",
+    title: "🐱 Sevimli Kedi Kodlama"
+  }
+};
+let currentTheme = THEMES.bee;
+
+// ============================================================================
+// 2. SEVİYELER (12 Zengin Bölüm)
+// ============================================================================
+const LEVELS = [
+  {
+    title: "Seviye 1: İlk Adım",
+    desc: "Hedefe ulaşmak için düz ilerle!",
+    start: [0, 4], dir: 0,
+    targets: [[0, 1]], rocks: [],
+    optimal: 3
+  },
+  {
+    title: "Seviye 2: Sağa Dönüş",
+    desc: "İleri git ve sağa dön!",
+    start: [0, 4], dir: 0,
+    targets: [[2, 2]], rocks: [],
+    optimal: 5
+  },
+  {
+    title: "Seviye 3: Sola Dönüş & Kaçış",
+    desc: "Kayayı dolaşmak için sola dön!",
+    start: [0, 4], dir: 0,
+    targets: [[3, 1]], rocks: [[0, 2], [1, 2]],
+    optimal: 6
+  },
+  {
+    title: "Seviye 4: Geri Adım",
+    desc: "Hedefi al ve geri viteste engeli aş!",
+    start: [1, 4], dir: 0,
+    targets: [[1, 2], [3, 4]], rocks: [[1, 1], [2, 2]],
+    optimal: 8
+  },
+  {
+    title: "Seviye 5: Çifte Çiçek",
+    desc: "Bahçedeki iki hedefi de topla!",
+    start: [0, 4], dir: 0,
+    targets: [[0, 1], [4, 1]], rocks: [[2, 1], [2, 2], [2, 3]],
+    optimal: 10
+  },
+  {
+    title: "Seviye 6: Taş Labirenti",
+    desc: "Dar geçitlerden geçerek çıkışı bul!",
+    start: [0, 4], dir: 0,
+    targets: [[4, 0]],
+    rocks: [[0, 3], [2, 4], [2, 3], [2, 2], [2, 0], [3, 2]],
+    optimal: 10
+  },
+  {
+    title: "Seviye 7: Zikzak Parkur",
+    desc: "Sağa ve sola ardışık manevralar yap!",
+    start: [0, 4], dir: 0,
+    targets: [[4, 0]],
+    rocks: [[0, 2], [1, 2], [1, 1], [3, 4], [3, 3], [3, 2]],
+    optimal: 8
+  },
+  {
+    title: "Seviye 8: Yıldız Hasadı",
+    desc: "Üç hedefi de toplamayı başar!",
+    start: [2, 2], dir: 0,
+    targets: [[0, 0], [4, 0], [2, 4]],
+    rocks: [[1, 1], [3, 1], [1, 3], [3, 3]],
+    optimal: 11
+  },
+  {
+    title: "Seviye 9: Geri Vites Ustası",
+    desc: "Geri adımlarla çıkmaz sokaktan kurtul!",
+    start: [0, 0], dir: 1,
+    targets: [[3, 0], [0, 3]],
+    rocks: [[1, 1], [2, 1], [3, 1]],
+    optimal: 9
+  },
+  {
+    title: "Seviye 10: Büyük Labirent",
+    desc: "Engelleri dikkatle analiz et!",
+    start: [0, 4], dir: 0,
+    targets: [[4, 4]],
+    rocks: [[0, 2], [1, 2], [2, 2], [3, 2], [3, 3]],
+    optimal: 12
+  },
+  {
+    title: "Seviye 11: Zeka Rotası",
+    desc: "Minimum komutla hedefe ulaş!",
+    start: [4, 4], dir: 3,
+    targets: [[0, 0], [4, 0]],
+    rocks: [[2, 0], [2, 1], [2, 3], [2, 4]],
+    optimal: 12
+  },
+  {
+    title: "Seviye 12: Şampiyonlar Parkuru",
+    desc: "Büyük final! Tüm becerilerini göster!",
+    start: [2, 4], dir: 0,
+    targets: [[0, 2], [4, 2], [2, 0]],
+    rocks: [[1, 4], [3, 4], [1, 2], [3, 2]],
+    optimal: 12
+  }
+];
+
+// ============================================================================
+// 3. OYUN DURUMU & DEĞİŞKENLERİ
+// ============================================================================
+let HOLD_MS = 1000;
+const STEP_MS = 650;
+const MAX_CMDS = 12;
+const ICON = { FWD: "⬆️", BACK: "⬇️", RIGHT: "↪️", LEFT: "↩️", RUN: "▶️", UNDO: "❌" };
+const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // 0: Up, 1: Right, 2: Down, 3: Left
+
+const G = {
+  li: 0,
+  cmds: [],
+  mode: "edit", // "edit", "run", "win", "fail"
+  idx: -1,
+  pos: [0, 4],
+  dir: 0,
+  ang: 0,
+  collectedTargets: [],
+  token: 0,
+  levelScores: {}
+};
+
+// ============================================================================
+// 4. SES SENTEZLEYİCİ (Web Audio API)
+// ============================================================================
+let actx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!actx) {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (actx && actx.state === "suspended") {
+    actx.resume();
+  }
+}
+
+function playTone(freq, dur, type = "sine", gainVal = 0.15) {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, actx.currentTime);
+    gain.gain.setValueAtTime(gainVal, actx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(actx.destination);
+    osc.start();
+    osc.stop(actx.currentTime + dur);
+  } catch (e) {}
+}
+
+const AudioSFX = {
+  cmdAdd: () => playTone(680, 0.09, "triangle", 0.16),
+  cmdUndo: () => playTone(280, 0.08, "sine", 0.15),
+  step: () => playTone(520, 0.08, "sine", 0.12),
+  turn: () => playTone(440, 0.1, "sine", 0.12),
+  collect: () => {
+    [523, 659, 784, 1046].forEach((f, i) => {
+      setTimeout(() => playTone(f, 0.12, "sine", 0.18), i * 65);
+    });
+  },
+  bump: () => playTone(140, 0.22, "sawtooth", 0.2),
+  win: () => {
+    const melody = [523, 659, 784, 659, 784, 1046];
+    melody.forEach((f, i) => {
+      setTimeout(() => playTone(f, 0.2, "triangle", 0.22), i * 110);
+    });
+  },
+  fail: () => {
+    playTone(240, 0.18, "sawtooth", 0.18);
+    setTimeout(() => playTone(180, 0.25, "sawtooth", 0.18), 160);
+  }
+};
+
+// ============================================================================
+// 5. KONFETİ SİSTEMİ
+// ============================================================================
+const confettiCanvas = document.getElementById("confettiCanvas");
+const cctx = confettiCanvas.getContext("2d");
+let confettiParticles = [];
+let confettiAnimId = null;
+
+function resizeConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeConfetti);
+resizeConfetti();
+
+function fireConfetti() {
+  const colors = ["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93", "#ff9800"];
+  for (let i = 0; i < 90; i++) {
+    confettiParticles.push({
+      x: window.innerWidth * (0.2 + Math.random() * 0.6),
+      y: window.innerHeight * 0.4,
+      vx: (Math.random() - 0.5) * 12,
+      vy: -Math.random() * 12 - 5,
+      size: Math.random() * 8 + 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      vrot: (Math.random() - 0.5) * 10,
+      life: 1
+    });
+  }
+  if (!confettiAnimId) renderConfetti();
+}
+
+function renderConfetti() {
+  cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  for (let i = confettiParticles.length - 1; i >= 0; i--) {
+    const p = confettiParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.35; // gravity
+    p.rot += p.vrot;
+    p.life -= 0.012;
+
+    cctx.save();
+    cctx.translate(p.x, p.y);
+    cctx.rotate((p.rot * Math.PI) / 180);
+    cctx.fillStyle = p.color;
+    cctx.globalAlpha = Math.max(p.life, 0);
+    cctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+    cctx.restore();
+
+    if (p.life <= 0 || p.y > window.innerHeight) {
+      confettiParticles.splice(i, 1);
+    }
+  }
+  if (confettiParticles.length > 0) {
+    confettiAnimId = requestAnimationFrame(renderConfetti);
+  } else {
+    confettiAnimId = null;
+  }
+}
+
+// ============================================================================
+// 6. OYUN MOTORU & TAHTA İŞLEMLERİ
+// ============================================================================
+const $ = id => document.getElementById(id);
+const lvl = () => LEVELS[G.li % LEVELS.length];
+const cellPx = () => $("board").clientWidth / 5;
+
+function buildBoard() {
+  const b = $("board");
+  b.innerHTML = "";
+  const L = lvl();
+
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const d = document.createElement("div");
+      d.className = "cell " + ((r + c) % 2 ? "b" : "a");
+      d.dataset.c = c;
+      d.dataset.r = r;
+
+      // Kayalar / Engeller
+      if (L.rocks.some(k => k[0] === c && k[1] === r)) {
+        d.textContent = currentTheme.rock;
+      }
+      // Hedefler (Çiçekler vb.)
+      const isTarget = L.targets.some(k => k[0] === c && k[1] === r);
+      const isCollected = G.collectedTargets.some(k => k[0] === c && k[1] === r);
+      if (isTarget && !isCollected) {
+        d.textContent = currentTheme.target;
+      }
+      b.appendChild(d);
+    }
+  }
+
+  // Karakter Elemanı
+  const charEl = document.createElement("div");
+  charEl.id = "character";
+  charEl.innerHTML = `<div id="charRot"><div class="direction-arrow"></div>${currentTheme.char}</div>`;
+  b.appendChild(charEl);
+
+  updateTargetsBadge();
+  renderCharacter(true);
+}
+
+function renderCharacter(instant = false) {
+  const ch = $("character");
+  if (!ch) return;
+  const cs = cellPx();
+  if (instant) ch.style.transition = "none";
+  ch.style.left = G.pos[0] * cs + "px";
+  ch.style.top = G.pos[1] * cs + "px";
+  $("charRot").style.transform = `rotate(${G.ang}deg)`;
+  if (instant) {
+    ch.offsetHeight; // force reflow
+    ch.style.transition = "";
+  }
+}
+
+function updateTargetsBadge() {
+  const L = lvl();
+  const collected = G.collectedTargets.length;
+  const total = L.targets.length;
+  $("targetIcon").textContent = currentTheme.target;
+  $("targetStatus").textContent = `${collected} / ${total} Toplandı`;
+}
+
+function renderCmds() {
+  const box = $("cmdSlots");
+  box.innerHTML = "";
+  for (let i = 0; i < MAX_CMDS; i++) {
+    const s = document.createElement("div");
+    s.className = "slot" + (i < G.cmds.length ? " filled" : "") + (i === G.idx ? " active" : "");
+    s.innerHTML = `<span class="slot-num">${i + 1}</span>`;
+    if (i < G.cmds.length) {
+      s.innerHTML += `<span>${ICON[G.cmds[i]]}</span>`;
+    }
+    box.appendChild(s);
+  }
+  $("cmdCount").textContent = `${G.cmds.length} / ${MAX_CMDS} Komut`;
+}
+
+function resetLevel() {
+  G.token++;
+  const L = lvl();
+  G.cmds = [];
+  G.mode = "edit";
+  G.idx = -1;
+  G.pos = [...L.start];
+  G.dir = L.dir;
+  G.ang = L.dir * 90;
+  G.collectedTargets = [];
+  $("boardMsg").style.display = "none";
+
+  $("lvlLabel").textContent = `Seviye ${G.li + 1}/${LEVELS.length}`;
+  $("arenaLevelTitle").textContent = L.title;
+  renderStarsPill();
+
+  buildBoard();
+  renderCmds();
+}
+
+function renderStarsPill() {
+  const s = G.levelScores[G.li] || 3;
+  $("lvlStars").textContent = "⭐".repeat(s);
+}
+
+function addCmd(cmd) {
+  initAudio();
+  if (G.mode !== "edit") return;
+
+  if (cmd === "UNDO") {
+    if (G.cmds.length > 0) {
+      G.cmds.pop();
+      AudioSFX.cmdUndo();
+      renderCmds();
+    }
+    return;
+  }
+  if (cmd === "RUN") {
+    runProgram();
+    return;
+  }
+  if (G.cmds.length < MAX_CMDS) {
+    G.cmds.push(cmd);
+    AudioSFX.cmdAdd();
+    renderCmds();
+  }
+}
+
+function execStep(cmd) {
+  const L = lvl();
+  if (cmd === "RIGHT") {
+    G.dir = (G.dir + 1) % 4;
+    G.ang += 90;
+    AudioSFX.turn();
+  } else if (cmd === "LEFT") {
+    G.dir = (G.dir + 3) % 4;
+    G.ang -= 90;
+    AudioSFX.turn();
+  } else if (cmd === "FWD") {
+    const [dx, dy] = DIRS[G.dir];
+    const nc = G.pos[0] + dx, nr = G.pos[1] + dy;
+    const inside = nc >= 0 && nc < 5 && nr >= 0 && nr < 5;
+    const rock = L.rocks.some(k => k[0] === nc && k[1] === nr);
+    if (inside && !rock) {
+      G.pos = [nc, nr];
+      AudioSFX.step();
+    } else {
+      AudioSFX.bump();
+    }
+  } else if (cmd === "BACK") {
+    const [dx, dy] = DIRS[G.dir];
+    const nc = G.pos[0] - dx, nr = G.pos[1] - dy; // 1 step backward
+    const inside = nc >= 0 && nc < 5 && nr >= 0 && nr < 5;
+    const rock = L.rocks.some(k => k[0] === nc && k[1] === nr);
+    if (inside && !rock) {
+      G.pos = [nc, nr];
+      AudioSFX.step();
+    } else {
+      AudioSFX.bump();
+    }
+  }
+
+  // Hedef toplama kontrolü
+  const targetIdx = L.targets.findIndex(
+    k => k[0] === G.pos[0] && k[1] === G.pos[1] &&
+         !G.collectedTargets.some(ct => ct[0] === k[0] && ct[1] === k[1])
+  );
+  if (targetIdx !== -1) {
+    G.collectedTargets.push([...L.targets[targetIdx]]);
+    AudioSFX.collect();
+    updateTargetsBadge();
+    // Tahtadaki hedef ikonunu kaldır
+    const cells = document.querySelectorAll("#board .cell");
+    cells.forEach(el => {
+      if (parseInt(el.dataset.c) === G.pos[0] && parseInt(el.dataset.r) === G.pos[1]) {
+        el.textContent = "✨";
+        setTimeout(() => { if (el.textContent === "✨") el.textContent = ""; }, 500);
+      }
+    });
+  }
+}
+
+async function runProgram() {
+  if (G.mode !== "edit" || !G.cmds.length) return;
+  const tok = ++G.token;
+  const L = lvl();
+  G.mode = "run";
+  G.pos = [...L.start];
+  G.dir = L.dir;
+  G.ang = L.dir * 90;
+  G.collectedTargets = [];
+  buildBoard();
+  renderCharacter(true);
+
+  await new Promise(r => setTimeout(r, 400));
+
+  for (let i = 0; i < G.cmds.length; i++) {
+    if (tok !== G.token) return;
+    G.idx = i;
+    renderCmds();
+    execStep(G.cmds[i]);
+    renderCharacter(false);
+    await new Promise(r => setTimeout(r, STEP_MS));
+  }
+
+  if (tok !== G.token) return;
+  G.idx = -1;
+  renderCmds();
+
+  // Kazanma Durumu: Tüm hedefler toplandı mı?
+  const allCollected = L.targets.every(t =>
+    G.collectedTargets.some(ct => ct[0] === t[0] && ct[1] === t[1])
+  );
+
+  if (allCollected) {
+    G.mode = "win";
+    AudioSFX.win();
+    fireConfetti();
+    
+    // Yıldız hesaplama
+    let stars = 3;
+    if (G.cmds.length > L.optimal + 2) stars = 1;
+    else if (G.cmds.length > L.optimal) stars = 2;
+    G.levelScores[G.li] = Math.max(G.levelScores[G.li] || 0, stars);
+
+    showBoardMsg("BRAVO! 🎉", `Tüm hedefleri topladın! (${"⭐".repeat(stars)})`);
+    await new Promise(r => setTimeout(r, 3200));
+    if (tok !== G.token) return;
+    G.li = (G.li + 1) % LEVELS.length;
+    resetLevel();
+  } else {
+    G.mode = "fail";
+    AudioSFX.fail();
+    showBoardMsg("Tekrar Dene 🙂", "Hedeflerin hepsine ulaşamadın!");
+    await new Promise(r => setTimeout(r, 1600));
+    if (tok !== G.token) return;
+    $("boardMsg").style.display = "none";
+    G.pos = [...L.start];
+    G.dir = L.dir;
+    G.ang = L.dir * 90;
+    G.collectedTargets = [];
+    buildBoard();
+    renderCharacter(true);
+    G.mode = "edit";
+  }
+}
+
+function showBoardMsg(title, sub) {
+  $("msgTitle").textContent = title;
+  $("msgSub").textContent = sub;
+  $("boardMsg").style.display = "flex";
+}
+
+// ============================================================================
+// 7. BEDEN & EL HAREKETİ TANIMA (MediaPipe Holistic)
+// ============================================================================
+// İskelet Çizim Bağlantıları
+const POSE_CONNECTIONS = [
+  [11, 12], // Omuzlar
+  [11, 13], [13, 15], // Sol Kol
+  [12, 14], [14, 16], // Sağ Kol
+  [11, 23], [12, 24], // Gövde
+  [23, 24]  // Kalçalar
+];
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],[0,17]
+];
+
+function isHandFist(hLm) {
+  if (!hLm || hLm.length < 21) return false;
+  const wrist = hLm[0];
+  let folded = 0;
+  // İşaret, Orta, Yüzük, Serçe parmak uçları vs PIP eklemleri
+  const pairs = [[8, 6], [12, 10], [16, 14], [20, 18]];
+  for (const [tip, pip] of pairs) {
+    const dTip = Math.hypot(hLm[tip].x - wrist.x, hLm[tip].y - wrist.y);
+    const dPip = Math.hypot(hLm[pip].x - wrist.x, hLm[pip].y - wrist.y);
+    if (dTip < dPip * 1.15) folded++;
+  }
+  return folded >= 3;
+}
+
+function classifyHolistic(res) {
+  const pLm = res.poseLandmarks;
+  const lHand = res.leftHandLandmarks;
+  const rHand = res.rightHandLandmarks;
+
+  // 1. ÇALIŞTIRMA: Yumruk Kontrolü (✊)
+  // El landmarkları üzerinden yumruk tespiti
+  if (isHandFist(rHand) || isHandFist(lHand)) {
+    return "RUN";
+  }
+
+  if (!pLm || pLm.length < 25) return null;
+
+  // Omuz genişliği normalizasyonu (Kameraya uzaklıktan bağımsız tespit için)
+  const shoulderDist = Math.max(
+    Math.hypot(pLm[11].x - pLm[12].x, pLm[11].y - pLm[12].y),
+    0.12
+  );
+
+  // 2. Gövde üzerinde yumruk/yumrukları birleştirme fallback tespiti
+  const wristsDist = Math.hypot(pLm[15].x - pLm[16].x, pLm[15].y - pLm[16].y) / shoulderDist;
+  const wristsChest = (pLm[15].y > pLm[11].y - 0.1 && pLm[15].y < pLm[23].y + 0.15) &&
+                      (pLm[16].y > pLm[12].y - 0.1 && pLm[16].y < pLm[24].y + 0.15);
+
+  // 3. GERİ AL / SİL: Kolları Çapraz Yapma (🙅)
+  // Sol bilek sağ omuz tarafına, sağ bilek sol omuz tarafına geçer
+  const crossedArms = (pLm[15].x < pLm[12].x + 0.05) && (pLm[16].x > pLm[11].x - 0.05) && wristsChest;
+  if (crossedArms) {
+    return "UNDO";
+  }
+
+  // Göğüste yumruklar bitişikse -> RUN
+  if (wristsDist < 0.42 && wristsChest) {
+    return "RUN";
+  }
+
+  // 4. İLERİ: Kolu Yukarı Kaldır (⬆️)
+  // Sağ veya sol bilek omuz/baş hizasının belirgin şekilde üzerinde
+  const rightArmUp = (pLm[12].y - pLm[16].y) / shoulderDist > 0.35 || pLm[16].y < pLm[0].y;
+  const leftArmUp = (pLm[11].y - pLm[15].y) / shoulderDist > 0.35 || pLm[15].y < pLm[0].y;
+  if (rightArmUp || leftArmUp) {
+    return "FWD";
+  }
+
+  // 5. SAĞA: Sağ Kolu Sağa Aç (↪️)
+  // Not: Kamera selfie modunda aynalıdır (scaleX(-1)).
+  // Kullanıcının fiziksel sağ kolu ekranda sağa açılır (raw kamerada x küçülür).
+  const rightArmOut = (pLm[12].x - pLm[16].x) / shoulderDist > 0.65;
+  const rightArmLevel = Math.abs(pLm[16].y - pLm[12].y) / shoulderDist < 0.9;
+  const leftArmOut = (pLm[15].x - pLm[11].x) / shoulderDist > 0.65;
+  if (rightArmOut && rightArmLevel && !leftArmOut) {
+    return "RIGHT";
+  }
+
+  // 6. SOLA: Sol Kolu Sola Aç (↩️)
+  // Kullanıcının fiziksel sol kolu ekranda sola açılır (raw kamerada x büyür).
+  const leftArmLevel = Math.abs(pLm[15].y - pLm[11].y) / shoulderDist < 0.9;
+  if (leftArmOut && leftArmLevel && !rightArmOut) {
+    return "LEFT";
+  }
+
+  // 7. GERİ: Kolu Aşağı İndir (⬇️)
+  // Bilek kalça hizasının belirgin altında uzatılmış
+  const rightArmDown = (pLm[16].y - pLm[24].y) / shoulderDist > 0.15;
+  const leftArmDown = (pLm[15].y - pLm[23].y) / shoulderDist > 0.15;
+  // Normal ayakta duruş dinlenmesini ayırt etmek için tek kol uzatma veya bariz aşağı tutuş
+  const isResting = Math.abs(pLm[16].y - pLm[15].y) / shoulderDist < 0.35 &&
+                    Math.abs(pLm[16].x - pLm[24].x) / shoulderDist < 0.4 &&
+                    Math.abs(pLm[15].x - pLm[23].x) / shoulderDist < 0.4;
+  if ((rightArmDown || leftArmDown) && !isResting) {
+    return "BACK";
+  }
+
+  return null;
+}
+
+// Çizim & Algılama Döngüsü
+let curGesture = null;
+let gestureSince = 0;
+let lockedGesture = null;
+let showSkeleton = true;
+
+const gesturePill = $("gesturePill");
+const gestureIcon = $("gestureIcon");
+const gestureLabel = $("gestureLabel");
+const ringBar = $("ringBar");
+const ctx = $("overlay").getContext("2d");
+
+const GESTURE_NAMES = {
+  FWD: "İLERİ GİT",
+  BACK: "GERİ ADIM",
+  RIGHT: "SAĞA DÖN",
+  LEFT: "SOLA DÖN",
+  RUN: "ÇALIŞTIR",
+  UNDO: "GERİ AL / SİL"
+};
+
+function onHolisticResults(res) {
+  ctx.clearRect(0, 0, 640, 480);
+
+  // İskelet Çizimi
+  if (showSkeleton && res.poseLandmarks) {
+    const lm = res.poseLandmarks;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#00e5ff"; // Neon Cyan bones
+    for (const [a, b] of POSE_CONNECTIONS) {
+      if (lm[a] && lm[b]) {
+        ctx.beginPath();
+        ctx.moveTo(lm[a].x * 640, lm[a].y * 480);
+        ctx.lineTo(lm[b].x * 640, lm[b].y * 480);
+        ctx.stroke();
+      }
+    }
+    // Eklemler
+    ctx.fillStyle = "#ff4081";
+    for (const idx of [11, 12, 13, 14, 15, 16]) {
+      if (lm[idx]) {
+        ctx.beginPath();
+        ctx.arc(lm[idx].x * 640, lm[idx].y * 480, 6, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+
+    // El İskeletleri (Varsa)
+    [res.leftHandLandmarks, res.rightHandLandmarks].forEach(hLm => {
+      if (hLm) {
+        ctx.strokeStyle = "#a855f7";
+        ctx.lineWidth = 2;
+        for (const [a, b] of HAND_CONNECTIONS) {
+          ctx.beginPath();
+          ctx.moveTo(hLm[a].x * 640, hLm[a].y * 480);
+          ctx.lineTo(hLm[b].x * 640, hLm[b].y * 480);
+          ctx.stroke();
+        }
+      }
+    });
+  }
+
+  // Hareket Sınıflandırma
+  const g = classifyHolistic(res);
+  const now = performance.now();
+  let progress = 0;
+
+  // Rehber Kartı Vurguları
+  document.querySelectorAll(".guide-card").forEach(c => c.classList.remove("detected"));
+  if (g && $(`guide-${g}`)) {
+    $(`guide-${g}`).classList.add("detected");
+  }
+
+  if (!g) {
+    curGesture = null;
+    lockedGesture = null;
+  } else {
+    if (g !== curGesture) {
+      curGesture = g;
+      gestureSince = now;
+    }
+    if (g !== lockedGesture) {
+      progress = (now - gestureSince) / HOLD_MS;
+      if (progress >= 1 && G.mode === "edit") {
+        addCmd(g);
+        lockedGesture = g;
+        progress = 0;
+      }
+    }
+  }
+
+  // Halka ve Pill Arayüzü
+  if (g && progress > 0) {
+    gesturePill.style.display = "flex";
+    gestureIcon.textContent = ICON[g] || "⚡";
+    gestureLabel.textContent = GESTURE_NAMES[g] || g;
+    const clampedP = Math.min(progress, 1);
+    ringBar.style.strokeDashoffset = 100 - (clampedP * 100);
+  } else {
+    gesturePill.style.display = "none";
+  }
+}
+
+// ============================================================================
+// 8. KAMERA & MEDIAPIPE BAŞLATMA
+// ============================================================================
+async function startCamera() {
+  const statusDot = $("statusDot");
+  const camStatusText = $("camStatusText");
+  const video = $("video");
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+      audio: false
+    });
+    video.srcObject = stream;
+    await video.play();
+    statusDot.classList.add("active");
+    camStatusText.textContent = "Kamera aktif, model yükleniyor…";
+  } catch (err) {
+    statusDot.style.background = "#eab308";
+    camStatusText.textContent = "Kamera bulunamadı. Butonlar veya klavyeyle oynayabilirsin!";
+    return;
+  }
+
+  if (typeof Holistic === "undefined") {
+    camStatusText.textContent = "MediaPipe kütüphanesi yüklenemedi. Butonlar aktif.";
+    return;
+  }
+
+  try {
+    const holistic = new Holistic({
+      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/${file}`
+    });
+
+    holistic.setOptions({
+      modelComplexity: 0, // Lite model for smooth 30-60 FPS
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      smoothSegmentation: false,
+      refineFaceLandmarks: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    holistic.onResults(onHolisticResults);
+    await holistic.initialize();
+
+    camStatusText.textContent = "Bedenini kameraya göster ve oyna! 🐝";
+    setTimeout(() => {
+      camStatusText.textContent = "Beden Sensörü Aktif";
+    }, 4000);
+
+    // Frame döngüsü
+    let lastTime = performance.now();
+    let frames = 0;
+    async function camLoop() {
+      if (video.readyState >= 2) {
+        await holistic.send({ image: video });
+        frames++;
+        const now = performance.now();
+        if (now - lastTime >= 1000) {
+          $("fpsCounter").textContent = `${frames} FPS`;
+          frames = 0;
+          lastTime = now;
+        }
+      }
+      requestAnimationFrame(camLoop);
+    }
+    requestAnimationFrame(camLoop);
+
+  } catch (e) {
+    camStatusText.textContent = "Model başlatılamadı. Butonlarla oynayabilirsin!";
+  }
+}
+
+// ============================================================================
+// 9. MODALLER VE ETKİLEŞİM
+// ============================================================================
+function setupModals() {
+  const closeAll = () => {
+    document.querySelectorAll(".modal-backdrop").forEach(m => m.style.display = "none");
+  };
+
+  document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", closeAll));
+  window.addEventListener("click", e => {
+    if (e.target.classList.contains("modal-backdrop")) closeAll();
+  });
+
+  // Seviye Seçim Modalı
+  $("btnOpenLevels").addEventListener("click", () => {
+    const container = $("levelGridContainer");
+    container.innerHTML = "";
+    LEVELS.forEach((lvlObj, idx) => {
+      const card = document.createElement("div");
+      card.className = "lvl-card" + (idx === G.li ? " active" : "");
+      const stars = G.levelScores[idx] || 0;
+      card.innerHTML = `
+        <span class="lvl-num">${idx + 1}</span>
+        <span style="font-size:11px; font-weight:700; text-align:center;">${lvlObj.title.split(":")[1] || lvlObj.title}</span>
+        <span class="lvl-stars">${stars > 0 ? "⭐".repeat(stars) : "⚪"}</span>
+      `;
+      card.addEventListener("click", () => {
+        G.li = idx;
+        resetLevel();
+        closeAll();
+      });
+      container.appendChild(card);
+    });
+    $("modalLevels").style.display = "flex";
+  });
+
+  // Tema / Karakter Modalı
+  $("btnOpenThemes").addEventListener("click", () => {
+    $("modalThemes").style.display = "flex";
+  });
+  document.querySelectorAll(".theme-card").forEach(c => {
+    c.addEventListener("click", () => {
+      document.querySelectorAll(".theme-card").forEach(x => x.classList.remove("active"));
+      c.classList.add("active");
+      const tId = c.dataset.t;
+      currentTheme = THEMES[tId];
+      document.body.className = `theme-${tId}`;
+      document.body.dataset.theme = tId;
+      $("logoIcon").textContent = currentTheme.char;
+      $("platformTitle").textContent = currentTheme.name;
+      buildBoard();
+      closeAll();
+    });
+  });
+
+  // Hareket Kılavuzu Modalı
+  $("btnOpenGuide").addEventListener("click", () => {
+    $("modalGuide").style.display = "flex";
+  });
+
+  // Ayarlar Modalı
+  $("btnOpenSettings").addEventListener("click", () => {
+    $("modalSettings").style.display = "flex";
+  });
+  $("rangeHold").addEventListener("input", e => {
+    HOLD_MS = parseInt(e.target.value);
+    $("holdMsLabel").textContent = (HOLD_MS / 1000).toFixed(1) + " sn";
+  });
+  $("chkMirror").addEventListener("change", e => {
+    if (e.target.checked) $("camWrap").classList.add("mirrored");
+    else $("camWrap").classList.remove("mirrored");
+  });
+  $("chkSkeleton").addEventListener("change", e => {
+    showSkeleton = e.target.checked;
+  });
+  $("chkSound").addEventListener("change", e => {
+    soundEnabled = e.target.checked;
+    $("btnToggleSound").textContent = soundEnabled ? "🔊" : "🔇";
+  });
+  $("btnToggleSound").addEventListener("click", () => {
+    soundEnabled = !soundEnabled;
+    $("chkSound").checked = soundEnabled;
+    $("btnToggleSound").textContent = soundEnabled ? "🔊" : "🔇";
+  });
+
+  // Tam Ekran
+  $("btnFullscreen").addEventListener("click", () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  // Bölüm Editörü
+  setupBuilder();
+}
+
+// Bölüm Tasarlayıcı
+function setupBuilder() {
+  const grid = $("builderGrid");
+  let activeTool = "start";
+  let customMap = Array(5).fill(null).map(() => Array(5).fill(null));
+  let customStart = [0, 4];
+  let customTargets = [[2, 2]];
+  let customRocks = [];
+
+  $("btnOpenEditor").addEventListener("click", () => {
+    $("bStartIcon").textContent = currentTheme.char;
+    $("bTargetIcon").textContent = currentTheme.target;
+    $("bRockIcon").textContent = currentTheme.rock;
+    renderBuilderCells();
+    $("modalEditor").style.display = "flex";
+  });
+
+  document.querySelectorAll(".tool-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".tool-btn").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      activeTool = b.dataset.tool;
+    });
+  });
+
+  function renderBuilderCells() {
+    grid.innerHTML = "";
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const cell = document.createElement("div");
+        cell.className = "b-cell";
+        if (customStart[0] === c && customStart[1] === r) cell.textContent = currentTheme.char;
+        else if (customTargets.some(t => t[0] === c && t[1] === r)) cell.textContent = currentTheme.target;
+        else if (customRocks.some(k => k[0] === c && k[1] === r)) cell.textContent = currentTheme.rock;
+
+        cell.addEventListener("click", () => {
+          if (activeTool === "start") {
+            customStart = [c, r];
+            customTargets = customTargets.filter(t => !(t[0] === c && t[1] === r));
+            customRocks = customRocks.filter(k => !(k[0] === c && k[1] === r));
+          } else if (activeTool === "target") {
+            if (!(customStart[0] === c && customStart[1] === r)) {
+              customRocks = customRocks.filter(k => !(k[0] === c && k[1] === r));
+              if (!customTargets.some(t => t[0] === c && t[1] === r)) customTargets.push([c, r]);
+            }
+          } else if (activeTool === "rock") {
+            if (!(customStart[0] === c && customStart[1] === r)) {
+              customTargets = customTargets.filter(t => !(t[0] === c && t[1] === r));
+              if (!customRocks.some(k => k[0] === c && k[1] === r)) customRocks.push([c, r]);
+            }
+          } else if (activeTool === "empty") {
+            customTargets = customTargets.filter(t => !(t[0] === c && t[1] === r));
+            customRocks = customRocks.filter(k => !(k[0] === c && k[1] === r));
+          }
+          renderBuilderCells();
+        });
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  $("btnClearBuilder").addEventListener("click", () => {
+    customTargets = [];
+    customRocks = [];
+    renderBuilderCells();
+  });
+
+  $("btnPlayCustom").addEventListener("click", () => {
+    if (!customTargets.length) {
+      alert("Lütfen en az bir hedef ekleyin!");
+      return;
+    }
+    const customLvl = {
+      title: "Özel Tasarım Seviye",
+      desc: "Senin tasarladığın parkur!",
+      start: [...customStart],
+      dir: 0,
+      targets: [...customTargets],
+      rocks: [...customRocks],
+      optimal: customTargets.length * 3
+    };
+    LEVELS.push(customLvl);
+    G.li = LEVELS.length - 1;
+    resetLevel();
+    document.querySelectorAll(".modal-backdrop").forEach(m => m.style.display = "none");
+  });
+}
+
+// ============================================================================
+// 10. BUTONLAR & KLAVYE KONTROLLERİ
+// ============================================================================
+function setupInputs() {
+  document.querySelectorAll(".controls-row .btn-cmd[data-c]").forEach(b => {
+    b.addEventListener("click", () => addCmd(b.dataset.c));
+  });
+
+  $("btnClearCmds").addEventListener("click", () => {
+    initAudio();
+    G.cmds = [];
+    AudioSFX.cmdUndo();
+    renderCmds();
+  });
+
+  $("btnResetLevel").addEventListener("click", () => {
+    initAudio();
+    resetLevel();
+  });
+
+  // Klavye kısayolları
+  document.addEventListener("keydown", e => {
+    const k = e.key.toLowerCase();
+    if (k === "w" || k === "1" || k === "arrowup") addCmd("FWD");
+    else if (k === "s" || k === "4" || k === "arrowdown") addCmd("BACK");
+    else if (k === "d" || k === "2" || k === "arrowright") addCmd("RIGHT");
+    else if (k === "a" || k === "3" || k === "arrowleft") addCmd("LEFT");
+    else if (k === "enter" || k === " ") { e.preventDefault(); addCmd("RUN"); }
+    else if (k === "backspace" || k === "delete") addCmd("UNDO");
+    else if (k === "c") { G.cmds = []; renderCmds(); }
+    else if (k === "n") { G.li = (G.li + 1) % LEVELS.length; resetLevel(); }
+    else if (k === "r") resetLevel();
+    else if (k === "f") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  window.addEventListener("resize", () => renderCharacter(true));
+}
+
+// ============================================================================
+// 11. BAŞLATMA
+// ============================================================================
+setupModals();
+setupInputs();
+resetLevel();
+startCamera();
+</script>
+</body>
+</html>
